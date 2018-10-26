@@ -163,7 +163,7 @@ public class ExcelImporter<T> {
                     }
 
                     if (!keyAttrEmpty && entity != null) {
-                        if (StringUtils.isNotBlank(classDesc.function())) { // 行数据校验
+                        if (classDesc != null && StringUtils.isNotBlank(classDesc.function())) { // 行数据校验
                             final String validateResult = validateRow(entity, "第" + (rowNum + 1) + "行", classDesc);
                             if (!validateResult.contains(CORRECT_SYMBOL)) {
                                 validateMassages.add(validateResult);
@@ -316,7 +316,7 @@ public class ExcelImporter<T> {
         final Field[] declaredFields = clazz.getDeclaredFields();
         validatorMap = new HashMap<>(declaredFields.length);
         final ExcelDesc classDesc = clazz.getAnnotation(ExcelDesc.class);
-        if (StringUtils.isNotBlank(classDesc.function())) {
+        if (classDesc != null && StringUtils.isNotBlank(classDesc.function())) {
             try {
                 validatorMap.put(CLASS_VALIDATOR_KEY, getFieldValidateClass(clazz, null, classDesc).newInstance());
             } catch (final IllegalAccessException | InstantiationException e) {
@@ -327,7 +327,7 @@ public class ExcelImporter<T> {
         for (Field field : declaredFields) {
             if (field.isAnnotationPresent(ExcelDesc.class)) {
                 final ExcelDesc fieldDesc = field.getAnnotation(ExcelDesc.class);
-                if (!"".equals(fieldDesc.function())) {
+                if (fieldDesc != null && !"".equals(fieldDesc.function())) {
                     try {
                         validatorMap.put(field.getName(), getFieldValidateClass(clazz, fieldDesc, classDesc).newInstance());
                     } catch (final IllegalAccessException | InstantiationException e) {
