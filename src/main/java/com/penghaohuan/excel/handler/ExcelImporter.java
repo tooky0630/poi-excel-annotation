@@ -1,6 +1,6 @@
 package com.penghaohuan.excel.handler;
 
-import com.penghaohuan.excel.annotation.ExcelDesc;
+import com.penghaohuan.excel.annotation.ImportExcelDesc;
 import com.penghaohuan.excel.exception.ExcelTemplateException;
 import com.penghaohuan.excel.exception.ExcelValidateException;
 import com.penghaohuan.excel.model.CellPosition;
@@ -23,7 +23,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -35,7 +34,7 @@ import java.util.regex.Pattern;
 
 /**
  * Excel 导入工具.
- * 使用注解@ExcelDesc，通过预定义数据类型的方式，导入Excel文件，解析行数据为预定义的数据类型.
+ * 使用注解@ImportExcelDesc，通过预定义数据类型的方式，导入Excel文件，解析行数据为预定义的数据类型.
  * 导入时读取excel,得到的结果是一个list<T>.T是自己定义的对象
  *
  * <p>支持合并的单元格识别</p>
@@ -54,10 +53,10 @@ import java.util.regex.Pattern;
  *
  * Excel校验会全内容校验完毕后再返回异常信息，
  * 每一条异常信息以换行符(\r\n)连接，作为Exception中的message返回
- * @see ExcelDesc
+ * @see ImportExcelDesc
  * @param <T> 对应Excel行数据的数据类型
  */
-public class ExcelImporter<T> {
+public final class ExcelImporter<T> {
 
     /**
      * 日志.
@@ -121,7 +120,7 @@ public class ExcelImporter<T> {
                 final Map<Integer, Field> fieldsMap = buildFieldOrder(sheet, headRowNumbers); // 从最后一行表头解析列名
                 initValidator();
                 final List<String> validateMassages = new LinkedList<>();
-                final ExcelDesc classDesc = clazz.getAnnotation(ExcelDesc.class);
+                final ImportExcelDesc classDesc = clazz.getAnnotation(ImportExcelDesc.class);
                 for (int rowNum = headRowNumbers; rowNum <= rows; rowNum++) {
                     T entity = null;
                     boolean keyAttrEmpty = false;
@@ -132,7 +131,7 @@ public class ExcelImporter<T> {
 
                         final Cell c = getCell(sheet, rowNum, column);
                         entity = entity == null ? clazz.newInstance() : entity;
-                        final ExcelDesc fieldDesc = field.getAnnotation(ExcelDesc.class);
+                        final ImportExcelDesc fieldDesc = field.getAnnotation(ImportExcelDesc.class);
                         final Class<?> fieldType = field.getType();
                         final String exceptionMsg = "第" + (rowNum + 1) + "行【" + fieldDesc.name() + "】列";
 
@@ -272,8 +271,8 @@ public class ExcelImporter<T> {
         final Map<Integer, Field> fieldsMap = new HashMap<>(); // 定义一个map用于存放列的序号和field.
         for (Field field : allFields) {
             // 将有注解的field存放到map中.
-            if (field.isAnnotationPresent(ExcelDesc.class)) {
-                final ExcelDesc attr = field.getAnnotation(ExcelDesc.class);
+            if (field.isAnnotationPresent(ImportExcelDesc.class)) {
+                final ImportExcelDesc attr = field.getAnnotation(ImportExcelDesc.class);
                 final int pos = getExcelCol(attr.name().trim(), columnList);
                 if (pos != -1) {
                     field.setAccessible(true); // 设置类的私有字段属性可访问.
@@ -315,7 +314,7 @@ public class ExcelImporter<T> {
     private void initValidator() {
         final Field[] declaredFields = clazz.getDeclaredFields();
         validatorMap = new HashMap<>(declaredFields.length);
-        final ExcelDesc classDesc = clazz.getAnnotation(ExcelDesc.class);
+        final ImportExcelDesc classDesc = clazz.getAnnotation(ImportExcelDesc.class);
         if (classDesc != null && StringUtils.isNotBlank(classDesc.function())) {
             try {
                 validatorMap.put(CLASS_VALIDATOR_KEY, getFieldValidateClass(clazz, null, classDesc).newInstance());
@@ -325,8 +324,8 @@ public class ExcelImporter<T> {
         }
 
         for (Field field : declaredFields) {
-            if (field.isAnnotationPresent(ExcelDesc.class)) {
-                final ExcelDesc fieldDesc = field.getAnnotation(ExcelDesc.class);
+            if (field.isAnnotationPresent(ImportExcelDesc.class)) {
+                final ImportExcelDesc fieldDesc = field.getAnnotation(ImportExcelDesc.class);
                 if (fieldDesc != null && !"".equals(fieldDesc.function())) {
                     try {
                         validatorMap.put(field.getName(), getFieldValidateClass(clazz, fieldDesc, classDesc).newInstance());
@@ -345,11 +344,11 @@ public class ExcelImporter<T> {
      * @param classDesc 实体注解
      * @return 校验类
      */
-    private Class getFieldValidateClass(final Class entityClass, final ExcelDesc fieldDesc, final ExcelDesc classDesc) {
+    private Class getFieldValidateClass(final Class entityClass, final ImportExcelDesc fieldDesc, final ImportExcelDesc classDesc) {
         Class checkClazz;
-        if (fieldDesc != null && !fieldDesc.clazz().equals(ExcelDesc.NoValidateClass.class)) {
+        if (fieldDesc != null && !fieldDesc.clazz().equals(ImportExcelDesc.NoValidateClass.class)) {
             checkClazz = fieldDesc.clazz();
-        } else if (classDesc != null && !classDesc.clazz().equals(ExcelDesc.NoValidateClass.class)) {
+        } else if (classDesc != null && !classDesc.clazz().equals(ImportExcelDesc.NoValidateClass.class)) {
             checkClazz = classDesc.clazz();
         } else {
             checkClazz = entityClass;
@@ -462,7 +461,7 @@ public class ExcelImporter<T> {
      * @param classDesc  导入实体的类注解
      * @return 返回带有 %c 的数据表示验证通过的数据；否则返回错误信息
      */
-    private String validateData(String value, String exceptionMsg, Field field, ExcelDesc fieldDesc, ExcelDesc classDesc) {
+    private String validateData(String value, String exceptionMsg, Field field, ImportExcelDesc fieldDesc, ImportExcelDesc classDesc) {
         String validateData = StringUtils.isBlank(value) ? CORRECT_SYMBOL : value + CORRECT_SYMBOL;
         if (fieldDesc.isCheckNull()) {
             validateData = checkNull(exceptionMsg, value);
@@ -509,7 +508,7 @@ public class ExcelImporter<T> {
      * @param classDesc 导入类注解
      * @return 返回带有 %c 的数据表示验证通过的数据；否则返回错误信息
      */
-    private String checkFunction(String exceptionMsg, String value, Field filed, ExcelDesc fieldDesc, ExcelDesc classDesc){
+    private String checkFunction(String exceptionMsg, String value, Field filed, ImportExcelDesc fieldDesc, ImportExcelDesc classDesc){
         final String function = fieldDesc.function();
         final Class<?> checkClazz = getFieldValidateClass(clazz, fieldDesc, classDesc);
         try {
@@ -538,7 +537,7 @@ public class ExcelImporter<T> {
      * @param clazzDesc VO类注解
      * @return 校验结果
      */
-    private String validateRow(final T entity, final String exceptionMsg, final ExcelDesc clazzDesc) {
+    private String validateRow(final T entity, final String exceptionMsg, final ImportExcelDesc clazzDesc) {
         final String function = clazzDesc.function();
         final Class<?> checkClass = getFieldValidateClass(clazz, null, clazzDesc);
         try {

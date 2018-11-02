@@ -1,25 +1,30 @@
 package example;
 
-import com.penghaohuan.excel.annotation.ExcelDesc;
+import com.penghaohuan.excel.annotation.ExportExcelDesc;
+import com.penghaohuan.excel.annotation.ImportExcelDesc;
 
 import java.util.Date;
 
 /**
  * A Simple Example For Importer Usage.
  */
-@ExcelDesc(name = "人员信息表", function = "validate", clazz = ExampleRowValidator.class)
+@ImportExcelDesc(name = "人员信息表", function = "validate", clazz = ExampleRowValidator.class)
 public class ExampleVO {
 
-    @ExcelDesc(name = "编号", function = "validate", clazz = ExampleValidator.class, keyAttr = true)
+    @ExportExcelDesc(name = "编号")
+    @ImportExcelDesc(name = "编号", function = "validate", clazz = ExampleValidator.class, keyAttr = true)
     private String no;
 
-    @ExcelDesc(name = "年龄", isCheckNull = true)
+    @ExportExcelDesc(name = "年龄")
+    @ImportExcelDesc(name = "年龄", isCheckNull = true)
     private Integer age;
 
-    @ExcelDesc(name = "出生年月日", dateFormat = "yyyy/M/d")
+    @ExportExcelDesc(name = "出生年月日")
+    @ImportExcelDesc(name = "出生年月日", dateFormat = "yyyy/M/d")
     private Date birth;
 
-    @ExcelDesc(name = "手机号码", regularExpression = "^[0-9]{11}", regularExpressionTip = "手机号码格式不正确")
+    @ExportExcelDesc(name = "手机号码")
+    @ImportExcelDesc(name = "手机号码", regularExpression = "^[0-9]{11}", regularExpressionTip = "手机号码格式不正确")
     private String phone;
 
     public String getNo() {

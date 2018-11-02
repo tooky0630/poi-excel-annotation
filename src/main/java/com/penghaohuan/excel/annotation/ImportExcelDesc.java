@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Excel导入导出属性配置.
+ * Excel导入属性配置.
  * @author penghaohuan
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.FIELD})
-public @interface ExcelDesc {
+public @interface ImportExcelDesc {
 
     /**
      * Excel表头列名.
