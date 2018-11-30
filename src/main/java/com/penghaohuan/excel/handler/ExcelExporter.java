@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.penghaohuan.excel.annotation.ExportExcelDesc;
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,7 @@ public final class ExcelExporter<T> {
             }
         }
 
-        final HSSFWorkbook workbook = new HSSFWorkbook();
+        final SXSSFWorkbook workbook = new SXSSFWorkbook();
 
         // excel2003中每个sheet中最多有65536行,为避免产生错误所以加这个逻辑.
         if (sheetSize > 65536 || sheetSize < 1) {
@@ -62,15 +62,15 @@ public final class ExcelExporter<T> {
         }
         final double sheetNo = Math.ceil((double) Math.max(list.size(), 1) / sheetSize); // 取出一共有多少个sheet.
         for (int index = 0; index < sheetNo; index++) {
-            final HSSFSheet sheet = workbook.createSheet();
+            final SXSSFSheet sheet = workbook.createSheet();
             workbook.setSheetName(index, sheetName + index);
 
-            final HSSFRow headRow = sheet.createRow(0);
+            final SXSSFRow headRow = sheet.createRow(0);
             // 写入各个字段的列头名称
             for (int col = 0; col < fields.size(); col++) {
                 final Field field = fields.get(col);
                 final ExportExcelDesc attr = field.getAnnotation(ExportExcelDesc.class);
-                final HSSFCell cell = headRow.createCell(col);
+                final SXSSFCell cell = headRow.createCell(col);
                 cell.setCellType(CellType.STRING);
                 cell.setCellValue(attr.name());
             }
@@ -79,13 +79,13 @@ public final class ExcelExporter<T> {
             final int endNo = Math.min(startNo + sheetSize, list.size());
             // 写入各条记录,每条记录对应excel表中的一行
             for (int i = startNo; i < endNo; i++) {
-                final HSSFRow row = sheet.createRow(i + 1 - startNo);
+                final SXSSFRow row = sheet.createRow(i + 1 - startNo);
                 final T vo = list.get(i);
                 for (int j = 0; j < fields.size(); j++) {
                     final Field field = fields.get(j);
                     field.setAccessible(true);
                     try {
-                        final HSSFCell cell = row.createCell(j);
+                        final SXSSFCell cell = row.createCell(j);
                         cell.setCellType(CellType.STRING);
                         final Object fieldVal = field.get(vo);
                         cell.setCellValue(fieldVal == null ? "" : String.valueOf(fieldVal));
@@ -100,7 +100,6 @@ public final class ExcelExporter<T> {
             for (int k = 0; k < fields .size(); k++) {
                 sheet.autoSizeColumn(k);
             }
-            setSizeColumn(sheet, list.size()); // 处理中文不能自动调整列宽的问题
         }
         output.flush();
         workbook.write(output);
@@ -108,34 +107,4 @@ public final class ExcelExporter<T> {
 
     }
 
-    /**
-     * 对中文内容自适应宽度的支持.
-     * @param sheet sheet表
-     * @param size 数据行数
-     */
-    private void setSizeColumn(final HSSFSheet sheet, final int size) {
-        for (int columnNum = 0; columnNum < size; columnNum++) {
-            int columnWidth = sheet.getColumnWidth(columnNum) / 256;
-            for (int rowNum = 0; rowNum < sheet.getLastRowNum(); rowNum++) {
-                HSSFRow currentRow;
-                //当前行未被使用过
-                if (sheet.getRow(rowNum) == null) {
-                    currentRow = sheet.createRow(rowNum);
-                } else {
-                    currentRow = sheet.getRow(rowNum);
-                }
-
-                if (currentRow.getCell(columnNum) != null) {
-                    final HSSFCell currentCell = currentRow.getCell(columnNum);
-                    if (currentCell.getCellType() == CellType.STRING) {
-                        final int length = currentCell.getStringCellValue().getBytes().length;
-                        if (columnWidth < length) {
-                            columnWidth = length;
-                        }
-                    }
-                }
-            }
-            sheet.setColumnWidth(columnNum, columnWidth * 256);
-        }
-    }
 }
