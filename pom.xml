@@ -11,7 +11,7 @@
     <name>Annotation Way For POI-Excel Usage</name>
 
     <properties>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.17.1</log4j.version>
         <jcl-over-slf4j.version>1.7.21</jcl-over-slf4j.version>
         <junit.version>4.12</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
